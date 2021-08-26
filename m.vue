@@ -1,5 +1,5 @@
 <template>
-    <div class="portal-component__input-option" @click=" $parentEmit('picked') ">
+    <div v-show=" show " class="portal-component__input-option" @click=" parentEmit('picked', 'hover') ">
 
         <template v-if=" !$slots.default ">
             {{ label }}
@@ -27,24 +27,49 @@
 
         },
 
-        methods: {
+        computed: {
 
-
-
-            /**
-             * MVC 的 V 层方法
-             */
-
-            $parentEmit($event) {
+            parent() {
 
                 for (let a = this.$parent; a; a = a.$parent) {
 
-                    if ( a.isInputOptionParent ) {
+                    if ( a.isInputOptionParent )
+                        return a;
 
-                        a.$emit($event, this);
-                        break;
+                }
+
+            },
+
+            _label() {
+
+                if ( this.$slots.default ) {
+
+                    let label = '';
+
+                    for (let a = null, i = 0; a = this.$slots.default[i]; i++) {
+
+                        label += a.elm.innerHTML.toLowerCase();
 
                     }
+
+                    return label;
+
+                }
+
+                else
+                    return this.label.toLowerCase();
+
+            }
+
+        },
+
+        methods: {
+
+            parentEmit(...$event) {
+
+                for (let a = null, i = 0; a = $event[i]; i++) {
+
+                    this.parent.$emit(a, this);
 
                 }
 
@@ -52,10 +77,23 @@
 
         },
 
+        mounted() {
+
+            this.parent.$on('filter',
+                ($value) => {
+
+                    this.show = this._label.indexOf( $value.toLowerCase() ) !== -1;
+
+                }
+            );
+
+        },
+
         data() {
 
             return {
-                isInputOptionComponent: true
+                isInputOptionComponent: true,
+                show: true
             };
 
         }
